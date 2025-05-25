@@ -1,44 +1,107 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class SomaDosSubconjuntos {
-    public static void main(String[] args) {
-        int[] conjunto = { -7, -3, -2, 5, 8 };
-        List<Integer> resultado = encontrarSubconjuntoSomaZero(conjunto);
+    static long instrucoes = 0;
+    static long iteracoes = 0;
 
-        if (!resultado.isEmpty()) {
-            System.out.println("Subconjunto encontrado: " + resultado);
+    public static void main(String[] args) {
+        int[] conjunto = {1, 3, 5, -2, -3, 2, 0, 32};
+        long tempoInicial = System.nanoTime();
+        Set<List<Integer>> resultadosValidos = encontrarTodosSubconjuntosSomaZero(conjunto);
+        long tempoFinal = System.nanoTime();
+        double tempoTotal = (tempoFinal - tempoInicial) / 1_000_000.0;
+
+        if (!resultadosValidos.isEmpty()) {
+            int count = 1;
+            for (List<Integer> solucao : resultadosValidos) {
+                System.out.println("Subconjunto " + (count++) + ": " + solucao);
+            }
         } else {
             System.out.println("Nenhum subconjunto com soma zero encontrado.");
         }
+
+        String[][] resultados = {
+            {
+                "SomaDosSubconjuntos",
+                Arrays.toString(conjunto),
+                String.valueOf(iteracoes),
+                String.valueOf(instrucoes),
+                String.format("%.3f", tempoTotal)
+            }
+        };
+        printTable(resultados);
     }
 
-    // Encontra um subconjunto cuja soma seja zero
-    public static List<Integer> encontrarSubconjuntoSomaZero(int[] conjunto) {
-        List<Integer> subconjunto = new ArrayList<>();
-        if (backtrack(conjunto, 0, subconjunto, 0)) {
-            return subconjunto;
-        }
-        return new ArrayList<>(); // Nenhum subconjunto encontrado
+    // Encontra todos os subconjuntos únicos cuja soma seja zero
+    public static Set<List<Integer>> encontrarTodosSubconjuntosSomaZero(int[] conjunto) {
+        instrucoes++;
+        Set<List<Integer>> todasSolucoes = new HashSet<>();
+        List<Integer> subconjuntoAtual = new ArrayList<>();
+        instrucoes++;
+        backtrack(conjunto, 0, subconjuntoAtual, 0, todasSolucoes);
+        return todasSolucoes;
     }
 
-    // Método recursivo de backtracking para encontrar um subconjunto com soma zero.
-    private static boolean backtrack(int[] conjunto, int index, List<Integer> subconjunto, int soma) {
+    private static void backtrack(int[] conjunto, int index, List<Integer> subconjunto, int soma, Set<List<Integer>> solucoes) {
+        iteracoes++;
+        instrucoes++;
+
         if (soma == 0 && !subconjunto.isEmpty()) {
-            return true; // Subconjunto com soma zero encontrado
+            instrucoes++;
+            List<Integer> copiaOrdenada = new ArrayList<>(subconjunto);
+            Collections.sort(copiaOrdenada);  // ordena para garantir unicidade
+            solucoes.add(copiaOrdenada);      // adiciona subconjunto ordenado ao Set
         }
+
+        instrucoes++;
         if (index >= conjunto.length) {
-            return false; // Não há mais elementos para processar
+            instrucoes++;
+            return;
         }
 
-        // Inclui o elemento atual no subconjunto
+        // inclui o elemento atual
         subconjunto.add(conjunto[index]);
-        if (backtrack(conjunto, index + 1, subconjunto, soma + conjunto[index])) {
-            return true; // Caminho válido encontrado
-        }
+        instrucoes++;
+        backtrack(conjunto, index + 1, subconjunto, soma + conjunto[index], solucoes);
 
-        // Exclui o elemento atual e tenta o próximo
+        // exclui o elemento atual (backtrack)
         subconjunto.remove(subconjunto.size() - 1);
-        return backtrack(conjunto, index + 1, subconjunto, soma);
+        instrucoes++;
+        backtrack(conjunto, index + 1, subconjunto, soma, solucoes);
+    }
+
+    public static void printTable(String[][] rows) {
+        String[] headers = {"Algoritmo", "Conjunto", "Iterações", "Instruções", "Tempo (ms)"};
+        int[] widths = {19, 27, 11, 13, 12};
+
+        for (int i = 0; i < headers.length; i++) {
+            System.out.printf("%-" + widths[i] + "s", headers[i]);
+            if (i < headers.length - 1) System.out.print(" | ");
+        }
+        System.out.println();
+
+        for (int width : widths) {
+            System.out.print("-".repeat(width));
+            System.out.print("-+-");
+        }
+        System.out.println();
+
+        String lastCategory = "";
+        for (String[] row : rows) {
+            String currentCategory = row[0];
+            if (!lastCategory.equals("") && !currentCategory.equals(lastCategory)) {
+                for (int width : widths) {
+                    System.out.print("-".repeat(width));
+                    System.out.print("-+-");
+                }
+                System.out.println();
+            }
+            for (int i = 0; i < row.length; i++) {
+                System.out.printf("%-" + widths[i] + "s", row[i]);
+                if (i < row.length - 1) System.out.print(" | ");
+            }
+            System.out.println();
+            lastCategory = currentCategory;
+        }
     }
 }
